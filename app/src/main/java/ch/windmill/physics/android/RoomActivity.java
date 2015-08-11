@@ -8,10 +8,14 @@ import android.os.Bundle;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import ch.windmill.physics.R;
+import ch.windmill.physics.core.BaseModel;
 import ch.windmill.physics.core.CircleModel;
+import ch.windmill.physics.core.Particle;
+import ch.windmill.physics.core.Rectangle;
 
 /**
  * Created by jaunerc on 04.08.2015.
@@ -21,6 +25,7 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
     private SurfaceView surface;
     private SurfaceHolder holder;
     private CircleModel model = new CircleModel(20);
+    private ArrayList<BaseModel> models;
     private GameLoop gameLoop;
     private Paint backgroundPaint, circlePaint;
 
@@ -41,7 +46,12 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
         circlePaint.setColor(Color.BLUE);
         circlePaint.setAntiAlias(true);
 
-        model.setAccel(4, -6);
+
+        // Models
+        model.setAccel(0, 0);
+
+        models = new ArrayList<>();
+        models.add(new Rectangle(100,60));
     }
 
     @Override
@@ -59,6 +69,8 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
         super.onPause();
 
         model.setAccel(0, 0);
+
+
     }
 
     @Override
@@ -80,6 +92,8 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         model.setSize(width, height);
+        Particle.screenHeight = height;
+        Particle.screenWidth = width;
     }
 
     private void draw() {
@@ -109,12 +123,16 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
             circleY = model.circlePixelY;
         }
         c.drawCircle(circleX,circleY,model.getCircleRadius(),circlePaint);
+
+        models.get(0).draw(c,circlePaint);
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         try {
             model.setSize(0,0);
+            Particle.screenHeight = 0;
+            Particle.screenWidth = 0;
             gameLoop.safeStop();
         } finally {
             gameLoop = null;
@@ -132,6 +150,7 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
 
                     draw();
                     model.updatePhysics();
+                    models.get(0).updatePhysics();
                 } catch (InterruptedException e) {
                     running = false;
                 }

@@ -68,7 +68,7 @@ public class CircleModel {
     public void moveCircle(final int circleX, final int circleY) {
         circlePixelX = circleX;
         circlePixelY = circleY;
-        velocityX = 0;
+        velocityX = 10;
         velocityY = 0;
     }
 
@@ -110,7 +110,7 @@ public class CircleModel {
         boolean bouncedX = false;
         boolean bouncedY = false;
 
-        /**if (lCircleY - circleRadius < 0) {
+        if (lCircleY - circleRadius < 0) {
             lCircleY = circleRadius;
             lVy = -lVy * rebound;
             bouncedY = true;
@@ -136,7 +136,7 @@ public class CircleModel {
         if (bouncedX && Math.abs(lVx) < STOP_BOUNCING_VELOCITY) {
             lVx = 0;
             bouncedX = false;
-        }*/
+        }
 
         // safely copy local vars back to object fields
         synchronized (LOCK) {
