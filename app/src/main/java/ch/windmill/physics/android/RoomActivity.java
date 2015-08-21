@@ -12,10 +12,10 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import ch.windmill.physics.R;
-import ch.windmill.physics.core.BaseModel;
-import ch.windmill.physics.core.CircleModel;
-import ch.windmill.physics.core.Particle;
+import ch.windmill.physics.core.Circle;
+import ch.windmill.physics.core.Figure;
 import ch.windmill.physics.core.Rectangle;
+import ch.windmill.physics.core.Vector2D;
 
 /**
  * Created by jaunerc on 04.08.2015.
@@ -24,8 +24,7 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
 
     private SurfaceView surface;
     private SurfaceHolder holder;
-    private CircleModel model = new CircleModel(20);
-    private ArrayList<BaseModel> models;
+    private ArrayList<Figure> figures;
     private GameLoop gameLoop;
     private Paint backgroundPaint, circlePaint;
 
@@ -46,12 +45,13 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
         circlePaint.setColor(Color.BLUE);
         circlePaint.setAntiAlias(true);
 
+        // Figures
+        figures = new ArrayList<>();
+        figures.add(new Circle(300, 500, 60));
+        figures.add(new Circle(500, 520, 60));
 
-        // Models
-        model.setAccel(0, 0);
-
-        models = new ArrayList<>();
-        models.add(new Rectangle(100,60));
+        figures.get(0).setVelocity(new Vector2D(12,0));
+        figures.get(1).setVelocity(new Vector2D(-12,0));
     }
 
     @Override
@@ -67,10 +67,6 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
     @Override
     public void onPause() {
         super.onPause();
-
-        model.setAccel(0, 0);
-
-
     }
 
     @Override
@@ -91,9 +87,8 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        model.setSize(width, height);
-        Particle.screenHeight = height;
-        Particle.screenWidth = width;
+        Figure.screenHeight = height;
+        Figure.screenWidth = width;
     }
 
     private void draw() {
@@ -115,24 +110,19 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
     private void doDraw(Canvas c) {
         int width = c.getWidth();
         int height = c.getHeight();
-        c.drawRect(0,0,width,height,backgroundPaint);
+        c.drawRect(0, 0, width, height, backgroundPaint);
 
-        float circleX, circleY;
-        synchronized (model.LOCK) {
-            circleX = model.circlePixelX;
-            circleY = model.circlePixelY;
+        //figures.get(0).draw(c,circlePaint);
+        for(Figure f : figures) {
+            f.draw(c,circlePaint);
         }
-        c.drawCircle(circleX,circleY,model.getCircleRadius(),circlePaint);
-
-        models.get(0).draw(c,circlePaint);
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         try {
-            model.setSize(0,0);
-            Particle.screenHeight = 0;
-            Particle.screenWidth = 0;
+            Figure.screenHeight = 0;
+            Figure.screenWidth = 0;
             gameLoop.safeStop();
         } finally {
             gameLoop = null;
@@ -149,8 +139,20 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
                     TimeUnit.MILLISECONDS.sleep(5);
 
                     draw();
-                    model.updatePhysics();
-                    models.get(0).updatePhysics();
+
+                    for(int i = 0; i < figures.size(); i++) {
+                        figures.get(i).updatePosition();
+                        for(int j = 0; j < figures.size(); j++) {
+                            if(j != i) {
+                                Figure f = figures.get(j);
+                                if (f instanceof Rectangle) {
+                                    figures.get(i).collisionDetect((Rectangle) f);
+                                } else if (f instanceof Circle) {
+                                    figures.get(i).collisionDetect((Circle) f);
+                                }
+                            }
+                        }
+                    }
                 } catch (InterruptedException e) {
                     running = false;
                 }
