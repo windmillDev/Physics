@@ -51,6 +51,7 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
         figures.add(new Circle(500, 520, 60));
 
         figures.get(0).setVelocity(new Vector2D(12,0));
+        figures.get(0).setMass(4);
         figures.get(1).setVelocity(new Vector2D(-12,0));
     }
 
@@ -136,7 +137,7 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
         public void run() {
             while (running) {
                 try {
-                    TimeUnit.MILLISECONDS.sleep(5);
+                    TimeUnit.MILLISECONDS.sleep(0);
 
                     draw();
 

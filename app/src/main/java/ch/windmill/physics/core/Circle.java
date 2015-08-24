@@ -4,11 +4,17 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 /**
+ * This class represents a circle in the physics engine.
+ *
  * Created by jaunerc on 15.08.15.
  */
 public class Circle extends Figure{
     private int radius;
 
+    /**
+     * Creates a new circle.
+     * @param radius
+     */
     public Circle(final int radius) {
         this(0,0,radius);
     }
@@ -18,6 +24,11 @@ public class Circle extends Figure{
         this.radius = radius;
     }
 
+    /**
+     * Updates the position vector. This method invokes the updatePosition method of the superclass.
+     * After that, it will check if the circle collides with the screen borders. If it is true, the
+     * velocity vector will be multiplied with -1.
+     */
     @Override
     public void updatePosition() {
         super.updatePosition();
@@ -34,31 +45,44 @@ public class Circle extends Figure{
         }
     }
 
+    /**
+     * Detect collision with a given rectangle.
+     * @param rectangle figure
+     */
     @Override
     public void collisionDetect(Rectangle rectangle) {
 
     }
 
+    /**
+     * Detect collision with a given circle. If a collision is detected, invoke the collide method.
+     * @param circle
+     */
     @Override
     public void collisionDetect(Circle circle) {
         if(vsCircle(circle)) {
             System.out.println("Circle collision detected!");
             collide(this, circle, frameDuration);
-            /**synchronized (LOCK) {
-                velocity.x = 0;
-                velocity.y = 0;
-                acceleration.x = 0;
-                acceleration.y = 0;
-            }*/
         }
     }
 
+    /**
+     * Check if there is a collision with the given circle.
+     * @param c circle to check collide
+     * @return if there is a collision or not
+     */
     private boolean vsCircle(final Circle c) {
         float r = radius + c.radius;
         r *= r;
         return r > (Math.pow((pos.x - c.pos.x),2) + Math.pow((pos.y - c.pos.y),2));
     }
 
+    /**
+     * Calculate the collision of two circle figures.
+     * @param c1 first circle
+     * @param c2 second circle
+     * @param duration frame duration time
+     */
     private static void collide(final Circle c1, final Circle c2, final long duration) {
         Vector2D difference = Vector2D.sub(c1.pos, c2.pos);
 
@@ -95,8 +119,6 @@ public class Circle extends Figure{
         Vector2D velocity1_res = Vector2D.add(vec_n_velocity1, vec_c_velocity1);
         Vector2D velocity2_res = Vector2D.add(vec_n_velocity2, vec_c_velocity2);
 
-        //c1.pos.x = 100;
-        //c1.pos.y = 200;
         c1.pos = Vector2D.add(c1.pos, Vector2D.multiply(velocity1_res, millisAfterCollision));
         c2.pos = Vector2D.add(c2.pos, Vector2D.multiply(velocity2_res, millisAfterCollision));
 
@@ -106,6 +128,17 @@ public class Circle extends Figure{
         System.out.println("new velocity1: " + c1.velocity.length());
     }
 
+    /**
+     * Move the two circles back to its collision point. That the engine finds the exact collision
+     * point is not guaranteed. In that case, there is a little overlap. The circles must be moved
+     * back to their point of collision.
+     * @param duration of the whole frame
+     * @param c1 first circle
+     * @param c2 second circle
+     * @param distanceAtFrameEnd distance between c1 and c2 at the end of the frame duration
+     * @return duration after the collision, that both circles moved further until the collision was
+     * detected
+     */
     private static float backToCollisionPoint(final long duration, final Circle c1, final Circle c2,
                                                final float distanceAtFrameEnd) {
         Vector2D circle1PosAtStart = new Vector2D((c1.pos.x - c1.velocity.x * duration), c1.pos.y - c1.velocity.y * duration);
@@ -135,6 +168,11 @@ public class Circle extends Figure{
         return millisAfterCollision;
     }
 
+    /**
+     * Draw the figure on the given <code>android.graphics.Canvas</code>.
+     * @param canvas to draw to
+     * @param paint to draw with
+     */
     @Override
     public void draw(Canvas canvas, Paint paint) {
         canvas.drawCircle(pos.x, pos.y, radius, paint);
