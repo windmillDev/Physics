@@ -37,6 +37,14 @@ public class Vector2D {
     }
 
     /**
+     * Calculates the square of the length.
+     * @return the square of the length.
+     */
+    public float lengthSquared() {
+        return (x*x + y*y);
+    }
+
+    /**
      * Normalize the vector. This means, set the length of the vector to 1. The direction will not
      * be changed.
      */

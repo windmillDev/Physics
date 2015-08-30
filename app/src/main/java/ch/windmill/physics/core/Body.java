@@ -4,20 +4,20 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 /**
- * Represents a basic figure. A figure has vectors for position, velocity and acceleration.
+ * Represents a basic body. A body has vectors for position, velocity and acceleration.
  *
  * Created by jaunerc on 15.08.15.
  */
-public abstract class Figure {
+public abstract class Body {
     // these fields are public to easier access trough calculation
     public static int screenWidth, screenHeight;
-    public final int pixelsPerMeter = 10;
     public Vector2D pos;
 
     protected Vector2D velocity;
     protected Vector2D acceleration;
-    protected long lastTimeMs, frameDuration;
     protected int mass;
+    protected MassData massData;
+    protected float inv_mass;
 
     // object for synchronisation
     public Object LOCK = new Object();
@@ -26,7 +26,7 @@ public abstract class Figure {
      * Create a new figure. Velocity and Acceleration will be set to zero.
      * @param pos the position of the figure
      */
-    public Figure(final Vector2D pos) {
+    public Body(final Vector2D pos) {
         this(pos, new Vector2D(0,0), new Vector2D(0,0));
     }
 
@@ -35,7 +35,7 @@ public abstract class Figure {
      * @param pos the position of the figure
      * @param velocity the velocity of the figure
      */
-    public Figure(final Vector2D pos, final Vector2D velocity) {
+    public Body(final Vector2D pos, final Vector2D velocity) {
         this(pos, velocity, new Vector2D(0,0));
     }
 
@@ -45,14 +45,14 @@ public abstract class Figure {
      * @param velocity the velocity of the figure
      * @param acceleration the acceleration of the figure
      */
-    public Figure(final Vector2D pos, final Vector2D velocity, final Vector2D acceleration) {
+    public Body(final Vector2D pos, final Vector2D velocity, final Vector2D acceleration) {
         this.pos = pos;
         this.velocity = velocity;
         this.acceleration = acceleration;
-        // initial value for the time
-        lastTimeMs = -1;
         // pseudo mass
         mass = 1;
+        inv_mass = 1/mass;
+        calcMass();
     }
 
     /**
@@ -115,45 +115,28 @@ public abstract class Figure {
         }
     }
 
+    protected void calcMass() {
+        massData = new MassData(1,1);
+    }
+
     /**
      * Updates the position vector based on the velocity and acceleration.
+     * @param frameDuration time value for the current movement
      */
-    public void updatePosition() {
+    public void updatePosition(final long frameDuration) {
         if(screenWidth <= 0 || screenHeight <= 0) {
             // invalid width and height, nothing to do until the GUI comes up
             return;
         }
 
-        long curTime = System.currentTimeMillis();
-        if(lastTimeMs < 0) {
-            lastTimeMs = curTime;
-            // first run, no old time measure available and no position change
-            return;
-        }
-
-        frameDuration = curTime - lastTimeMs;
-        lastTimeMs = curTime;
-
         // update the velocity
-        velocity.x += ((frameDuration * acceleration.x) / 1000) * pixelsPerMeter;
-        velocity.y += ((frameDuration * acceleration.y) / 1000) * pixelsPerMeter;
+        velocity.x += ((frameDuration * acceleration.x) / 1000) * Engine.PIXELSPERMETER;
+        velocity.y += ((frameDuration * acceleration.y) / 1000) * Engine.PIXELSPERMETER;
 
         // update the position
-        pos.x += ((velocity.x * frameDuration) / 1000) * pixelsPerMeter;
-        pos.y += ((velocity.y * frameDuration) / 1000) * pixelsPerMeter;
+        pos.x += ((velocity.x * frameDuration) / 1000) * Engine.PIXELSPERMETER;
+        pos.y += ((velocity.y * frameDuration) / 1000) * Engine.PIXELSPERMETER;
     }
-
-    /**
-     * Detect collision with a given rectangle figure.
-     * @param rectangle figure
-     */
-    public abstract void collisionDetect(Rectangle rectangle);
-
-    /**
-     * Detect collision with a given circle figure.
-     * @param circle
-     */
-    public abstract void collisionDetect(Circle circle);
 
     /**
      * Draw the figure on the given <code>android.graphics.Canvas</code>.

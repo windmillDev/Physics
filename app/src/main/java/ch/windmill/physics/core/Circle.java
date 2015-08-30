@@ -4,12 +4,12 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 /**
- * This class represents a circle in the physics engine.
+ * This class represents a circle in the physics Engine.
  *
  * Created by jaunerc on 15.08.15.
  */
-public class Circle extends Figure{
-    private int radius;
+public class Circle extends Body {
+    public int radius;
 
     /**
      * Creates a new circle.
@@ -30,8 +30,8 @@ public class Circle extends Figure{
      * velocity vector will be multiplied with -1.
      */
     @Override
-    public void updatePosition() {
-        super.updatePosition();
+    public void updatePosition(long frameDuration) {
+        super.updatePosition(frameDuration);
 
         if((pos.x + radius) > screenWidth || (pos.x - radius) < 0) {
             synchronized (LOCK) {
@@ -48,41 +48,43 @@ public class Circle extends Figure{
     /**
      * Detect collision with a given rectangle.
      * @param rectangle figure
-     */
+     *
     @Override
-    public void collisionDetect(Rectangle rectangle) {
-
-    }
+    public boolean collisionDetect(Rectangle rectangle) {
+        return false;
+    }*/
 
     /**
      * Detect collision with a given circle. If a collision is detected, invoke the collide method.
      * @param circle
-     */
+     *
     @Override
-    public void collisionDetect(Circle circle) {
+    public boolean collisionDetect(Circle circle, long frameDuration) {
         if(vsCircle(circle)) {
             System.out.println("Circle collision detected!");
-            collide(this, circle, frameDuration);
+            //collide(this, circle, frameDuration);
+            return true;
         }
-    }
+        return false;
+    }*/
 
     /**
      * Check if there is a collision with the given circle.
      * @param c circle to check collide
      * @return if there is a collision or not
-     */
+     *
     private boolean vsCircle(final Circle c) {
         float r = radius + c.radius;
         r *= r;
         return r > (Math.pow((pos.x - c.pos.x),2) + Math.pow((pos.y - c.pos.y),2));
-    }
+    }*/
 
     /**
      * Calculate the collision of two circle figures.
      * @param c1 first circle
      * @param c2 second circle
      * @param duration frame duration time
-     */
+     *
     private static void collide(final Circle c1, final Circle c2, final long duration) {
         Vector2D difference = Vector2D.sub(c1.pos, c2.pos);
 
@@ -126,10 +128,10 @@ public class Circle extends Figure{
         c1.setVelocity(velocity1_res);
         c2.setVelocity(velocity2_res);
         System.out.println("new velocity1: " + c1.velocity.length());
-    }
+    }*/
 
     /**
-     * Move the two circles back to its collision point. That the engine finds the exact collision
+     * Move the two circles back to its collision point. That the Engine finds the exact collision
      * point is not guaranteed. In that case, there is a little overlap. The circles must be moved
      * back to their point of collision.
      * @param duration of the whole frame
@@ -138,7 +140,7 @@ public class Circle extends Figure{
      * @param distanceAtFrameEnd distance between c1 and c2 at the end of the frame duration
      * @return duration after the collision, that both circles moved further until the collision was
      * detected
-     */
+     *
     private static float backToCollisionPoint(final long duration, final Circle c1, final Circle c2,
                                                final float distanceAtFrameEnd) {
         Vector2D circle1PosAtStart = new Vector2D((c1.pos.x - c1.velocity.x * duration), c1.pos.y - c1.velocity.y * duration);
@@ -166,7 +168,7 @@ public class Circle extends Figure{
                 (float)(circle2PosAtStart.y + c2.velocity.y * millisToCollision));
 
         return millisAfterCollision;
-    }
+    }*/
 
     /**
      * Draw the figure on the given <code>android.graphics.Canvas</code>.

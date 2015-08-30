@@ -8,12 +8,12 @@ import android.os.Bundle;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import ch.windmill.physics.R;
+import ch.windmill.physics.core.Body;
 import ch.windmill.physics.core.Circle;
-import ch.windmill.physics.core.Figure;
+import ch.windmill.physics.core.Engine;
 import ch.windmill.physics.core.Rectangle;
 import ch.windmill.physics.core.Vector2D;
 
@@ -24,9 +24,10 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
 
     private SurfaceView surface;
     private SurfaceHolder holder;
-    private ArrayList<Figure> figures;
-    private GameLoop gameLoop;
+    //private ArrayList<Body> figures;
+    private AnimationLoop animationLoop;
     private Paint backgroundPaint, circlePaint;
+    private Engine engine;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -46,13 +47,24 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
         circlePaint.setAntiAlias(true);
 
         // Figures
-        figures = new ArrayList<>();
-        figures.add(new Circle(300, 500, 60));
-        figures.add(new Circle(500, 520, 60));
+        //Body c1 = new Circle(300,500,60);
+        //Body c2 = new Circle(500, 520, 60);
+        Body c3 = new Circle(700,200,60);
+        Body c4 = new Circle(500,250,60);
+        c3.setVelocity(new Vector2D(-12, 0));
+        c4.setVelocity(new Vector2D(12,0));
 
-        figures.get(0).setVelocity(new Vector2D(12,0));
-        figures.get(0).setMass(4);
-        figures.get(1).setVelocity(new Vector2D(-12,0));
+        Body r1 = new Rectangle(100,100,50,100);
+        Body r2 = new Rectangle(400,120,50,100);
+        //r1.setVelocity(new Vector2D(10,0));
+        //r2.setVelocity(new Vector2D(-10,0));
+
+        // Engine
+        engine = new Engine();
+        engine.addFigure(r1);
+        engine.addFigure(r2);
+        engine.addFigure(c3);
+        engine.addFigure(c4);
     }
 
     @Override
@@ -82,14 +94,14 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        gameLoop = new GameLoop();
-        gameLoop.start();
+        animationLoop = new AnimationLoop();
+        animationLoop.start();
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Figure.screenHeight = height;
-        Figure.screenWidth = width;
+        Body.screenHeight = height;
+        Body.screenWidth = width;
     }
 
     private void draw() {
@@ -114,7 +126,7 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
         c.drawRect(0, 0, width, height, backgroundPaint);
 
         //figures.get(0).draw(c,circlePaint);
-        for(Figure f : figures) {
+        for(Body f : engine.getBodies()) {
             f.draw(c,circlePaint);
         }
     }
@@ -122,38 +134,27 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         try {
-            Figure.screenHeight = 0;
-            Figure.screenWidth = 0;
-            gameLoop.safeStop();
+            Body.screenHeight = 0;
+            Body.screenWidth = 0;
+            animationLoop.safeStop();
         } finally {
-            gameLoop = null;
+            animationLoop = null;
         }
     }
 
-    private class GameLoop extends Thread {
+    private class AnimationLoop extends Thread {
         private volatile boolean running = true;
 
         @Override
         public void run() {
+            engine.start();
             while (running) {
                 try {
                     TimeUnit.MILLISECONDS.sleep(0);
 
                     draw();
 
-                    for(int i = 0; i < figures.size(); i++) {
-                        figures.get(i).updatePosition();
-                        for(int j = 0; j < figures.size(); j++) {
-                            if(j != i) {
-                                Figure f = figures.get(j);
-                                if (f instanceof Rectangle) {
-                                    figures.get(i).collisionDetect((Rectangle) f);
-                                } else if (f instanceof Circle) {
-                                    figures.get(i).collisionDetect((Circle) f);
-                                }
-                            }
-                        }
-                    }
+                    engine.handleFrame();
                 } catch (InterruptedException e) {
                     running = false;
                 }
