@@ -26,7 +26,7 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
     private SurfaceHolder holder;
     //private ArrayList<Body> figures;
     private AnimationLoop animationLoop;
-    private Paint backgroundPaint, circlePaint;
+    private Paint backgroundPaint, circlePaint, greenPaint;
     private Engine engine;
 
     @Override
@@ -46,25 +46,32 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
         circlePaint.setColor(Color.BLUE);
         circlePaint.setAntiAlias(true);
 
+        greenPaint = new Paint();
+        greenPaint.setColor(Color.GREEN);
+        greenPaint.setAntiAlias(true);
+
         // Figures
         //Body c1 = new Circle(300,500,60);
         //Body c2 = new Circle(500, 520, 60);
-        Body c3 = new Circle(700,200,60);
+        Body c3 = new Circle(800,200,60);
         Body c4 = new Circle(500,250,60);
         c3.setVelocity(new Vector2D(-12, 0));
-        c4.setVelocity(new Vector2D(12,0));
+        c4.setVelocity(new Vector2D(12,4));
 
         Body r1 = new Rectangle(100,100,50,100);
-        Body r2 = new Rectangle(400,120,50,100);
-        //r1.setVelocity(new Vector2D(10,0));
-        //r2.setVelocity(new Vector2D(-10,0));
+        Body r2 = new Rectangle(400,130,50,100);
+        Body r3 = new Rectangle(300,100,50,100);
+        r1.setVelocity(new Vector2D(12,0));
+        r2.setVelocity(new Vector2D(-10,-2));
+        //r3.setMass(0);
 
         // Engine
         engine = new Engine();
-        engine.addFigure(r1);
-        engine.addFigure(r2);
+        //engine.addFigure(r1);
+        //engine.addFigure(r2);
+        engine.addFigure(r3);
         engine.addFigure(c3);
-        engine.addFigure(c4);
+        //engine.addFigure(c4);
     }
 
     @Override
@@ -125,7 +132,8 @@ public class RoomActivity extends Activity implements SurfaceHolder.Callback{
         int height = c.getHeight();
         c.drawRect(0, 0, width, height, backgroundPaint);
 
-        //figures.get(0).draw(c,circlePaint);
+        //engine.getBodies().get(0).draw(c, circlePaint);
+        //engine.getBodies().get(1).draw(c, greenPaint);
         for(Body f : engine.getBodies()) {
             f.draw(c,circlePaint);
         }

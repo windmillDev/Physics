@@ -7,9 +7,14 @@ public class MassData {
     private float mass;
     private float inv_mass;
 
-    public MassData(final float density, final float area) {
-        mass = density * area;
-        inv_mass = 1 / mass;
+    public MassData(final float density, final float volume) {
+        mass = density * volume;
+
+        if(mass == 0) {
+            inv_mass = 0;
+        } else {
+            inv_mass = 1 / mass;
+        }
     }
 
     public float getMass() {

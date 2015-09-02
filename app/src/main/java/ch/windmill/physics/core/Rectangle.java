@@ -45,7 +45,7 @@ public class Rectangle extends Body {
         c.drawRect(pos.x, pos.y, max.x, max.y, p);
     }
 
-    public Vector2D getMiddle() {
-        return new Vector2D((max.x - pos.x) / 2, (max.y - pos.y) / 2);
+    public Vector2D getCenter() {
+        return new Vector2D(pos.x + (0.5f * width), pos.y + (0.5f * height));
     }
 }

@@ -90,6 +90,7 @@ public class Engine {
                         //n.normalize();
                         //resolveCollision(b1, b2, n);
                         c.resolveCollision();
+                        c.positionalCorrection();
                     }
                 }
             }
@@ -101,13 +102,13 @@ public class Engine {
             if(b2 instanceof Rectangle) {
                 return RectVsRect((Rectangle) b1, (Rectangle) b2, c);
             } else if(b2 instanceof Circle) {
-                return RectVsCircle((Rectangle) b1, (Circle) b2);
+                return RectVsCircle((Rectangle) b1, (Circle) b2, c);
             }
         } else if(b1 instanceof Circle) {
             if(b2 instanceof Circle) {
                 return CircleVsCircle((Circle) b1, (Circle) b2, c);
             } else if(b2 instanceof Rectangle) {
-                return RectVsCircle((Rectangle) b2, (Circle) b1);
+                return RectVsCircle((Rectangle) b2, (Circle) b1, c);
             }
         }
 
@@ -115,11 +116,8 @@ public class Engine {
     }
 
     private boolean RectVsRect(final Rectangle r1, final Rectangle r2, final Collision collision) {
-        /**if(r1.max.x < r2.pos.x || r1.pos.x > r2.max.x) { return false; }
-        if(r1.max.y < r2.pos.y || r1.pos.y > r2.max.y) { return false; }
-        return true;*/
-
-        Vector2D normal = Vector2D.sub(r2.getMiddle(), r1.getMiddle());
+        // Calculate the vector from the middle position of r1 to the middle position of r2.
+        Vector2D normal = Vector2D.sub(r2.getCenter(), r1.getCenter());
 
         // Calculate half extents along x axis for each body
         float b1_extent = (r1.max.x - r1.pos.x) / 2;
@@ -128,8 +126,36 @@ public class Engine {
         // Calculate overlap on x axis
         float x_overlap = b1_extent + b2_extent - Math.abs(normal.x);
 
+        // SAT test x axis
         if(x_overlap > 0) {
-            
+            // Calculate half extents along y axis for each body
+            b1_extent = (r1.max.y - r1.pos.y) / 2;
+            b2_extent = (r2.max.y - r2.pos.y) / 2;
+
+            // Calculate overlap on y axis
+            float y_overlap = b1_extent + b2_extent - Math.abs(normal.y);
+
+            // SAT test y axis
+            if(y_overlap > 0) {
+                // find out the axis with least penetration
+                if(x_overlap < y_overlap) {
+                    if(normal.x < 0) {
+                        collision.setNormal(new Vector2D(-1, 0));
+                    } else {
+                        collision.setNormal(new Vector2D(1, 0));
+                    }
+                    collision.setPenetration(x_overlap);
+                    return true;
+                } else {
+                    if(normal.y < 0) {
+                        collision.setNormal(new Vector2D(0,-1));
+                    } else {
+                        collision.setNormal(new Vector2D(0, 1));
+                    }
+                    collision.setPenetration(y_overlap);
+                    return true;
+                }
+            }
         }
 
         return false;
@@ -140,9 +166,7 @@ public class Engine {
 
         float r = c1.radius + c2.radius;
 
-        r *= r;
-
-        if(normal.lengthSquared() > r) {
+        if(normal.lengthSquared() > (r*r)) {
             return false;
         }
         //return r > (Math.pow((c1.pos.x - c2.pos.x),2) + Math.pow((c1.pos.y - c2.pos.y),2));
@@ -155,31 +179,65 @@ public class Engine {
         return true;
     }
 
-    private boolean RectVsCircle(final Rectangle r1, final Circle c1) {
-        return false;
-    }
+    private boolean RectVsCircle(final Rectangle r1, final Circle c1, final Collision collision) {
+        // vector from rect to circle
+        Vector2D difference = Vector2D.sub(c1.pos, r1.getCenter());
+        Vector2D closest = new Vector2D();
 
-    private void resolveCollision(final Body f1, final Body f2, final Vector2D normal) {
-        Vector2D relVel = Vector2D.sub(f2.velocity, f1.velocity);
+        // calculate half extents for each axis
+        float x_extent = (r1.max.x - r1.pos.x) / 2;
+        float y_extent = (r1.max.y - r1.pos.y) / 2;
 
-        // calculate relative velocity in terms of the normal direction
-        float scalarAlongNormal = Vector2D.dot(relVel, normal);
+        // clamp point to edges of the AABB
+        closest.x = clamp(-x_extent, x_extent, difference.x);
+        closest.y = clamp(-y_extent, y_extent, difference.y);
 
-        // do not resolve if velocities are separating
-        if(scalarAlongNormal > 0) {
-            return;
+        boolean inside = false;
+
+        // Circle is inside the AABB, so we need to clamp the circle's center
+        // to the closest edge
+        if(Vector2D.equals(closest, difference)) {
+            inside = true;
+
+            // find closest axis
+            if(Math.abs(difference.x) > Math.abs(difference.y)) {
+                if(closest.x > 0) {
+                    closest.x = x_extent;
+                } else {
+                    closest.x = -x_extent;
+                }
+            } else {
+                if(closest.y > 0) {
+                    closest.y = x_extent;
+                } else {
+                    closest.y = -x_extent;
+                }
+            }
         }
 
-        // calculate restitution
-        float e = 0.1f;
+        Vector2D normal = Vector2D.sub(difference, closest);
+        float d = normal.lengthSquared();
+        float r = c1.radius;
 
-        // calculate impulse scalar
-        float j = -(1 + e) * scalarAlongNormal;
-        j /= 1 / f1.mass + 1 / f2.mass;
+        if(d > (r * r) && !inside) {
+            return false;
+        }
 
-        // apply impulse
-        Vector2D impulse = Vector2D.multiply(normal, j);
-        f1.velocity = Vector2D.sub(f1.velocity, Vector2D.multiply(impulse, 1/f1.mass));
-        f2.velocity = Vector2D.add(f2.velocity, Vector2D.multiply(impulse, 1/f2.mass));
+        // avoid sqrt until we needed
+        d = (float) Math.sqrt(d);
+        normal.normalize();
+        if(inside) {
+            collision.setNormal(Vector2D.multiply(normal, -1));
+        } else {
+            collision.setNormal(normal);
+        }
+
+        collision.setPenetration(r - d);
+
+        return true;
+    }
+
+    private float clamp(final float f, final float low, final float high) {
+        return Math.max(Math.min(f, high), low);
     }
 }

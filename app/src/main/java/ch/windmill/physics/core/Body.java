@@ -15,9 +15,7 @@ public abstract class Body {
 
     protected Vector2D velocity;
     protected Vector2D acceleration;
-    protected int mass;
     protected MassData massData;
-    protected float inv_mass;
 
     // object for synchronisation
     public Object LOCK = new Object();
@@ -49,9 +47,6 @@ public abstract class Body {
         this.pos = pos;
         this.velocity = velocity;
         this.acceleration = acceleration;
-        // pseudo mass
-        mass = 1;
-        inv_mass = 1/mass;
         calcMass();
     }
 
@@ -99,24 +94,24 @@ public abstract class Body {
      * Returns the mass.
      * @return the mass value
      */
-    public int getMass() {
-        synchronized (LOCK) {
-            return mass;
-        }
+    public float getMass() {
+        return massData.getMass();
+    }
+
+    public float getInverseMass() {
+        return massData.getInv_mass();
     }
 
     /**
      * Set the mass value.
      * @param mass new value
      */
-    public void setMass(final int mass) {
-        synchronized (LOCK) {
-            this.mass = mass;
-        }
+    public void setMass(final float mass) {
+        massData = new MassData(0,1);
     }
 
     protected void calcMass() {
-        massData = new MassData(1,1);
+        massData = new MassData(3,1);
     }
 
     /**

@@ -36,15 +36,34 @@ public class Collision {
         }
 
         // calculate restitution
-        float e = 0.5f;
+        float e = 1f;
 
         // calculate impulse scalar
         float j = -(1 + e) * scalarAlongNormal;
-        j /= 1 / b1.mass + 1 / b2.mass;
+        j /= 1 / b1.getMass() + 1 / b2.getMass();
 
         // apply impulse
         Vector2D impulse = Vector2D.multiply(normal, j);
-        b1.velocity = Vector2D.sub(b1.velocity, Vector2D.multiply(impulse, 1/b1.mass));
-        b2.velocity = Vector2D.add(b2.velocity, Vector2D.multiply(impulse, 1/b2.mass));
+        b1.velocity = Vector2D.sub(b1.velocity, Vector2D.multiply(impulse, b1.getInverseMass()));
+        b2.velocity = Vector2D.add(b2.velocity, Vector2D.multiply(impulse, b2.getInverseMass()));
+    }
+
+    public void positionalCorrection() {
+        float percent = 0.4f;
+        float slop = 0.01f;
+
+        //float correctionScalar = Math.max(penetration -slop, 0.0f) / (b2.getInverseMass() + b1.getInverseMass() * percent);
+        Vector2D correction = Vector2D.multiply(normal,penetration / (b1.getInverseMass() + b2.getInverseMass()));
+        correction = Vector2D.multiply(correction, percent);
+        //Vector2D correction = Vector2D.multiply(normal, correctionScalar);
+        //Vector2D correction = Vector2D.multiply(normal, correctionScalar);
+
+        b1.pos = Vector2D.sub(b1.pos, Vector2D.multiply(correction, b1.getInverseMass()));
+        //b1.pos = Vector2D.sub(b1.pos, correction);
+        b2.pos = Vector2D.add(b2.pos, Vector2D.multiply(correction, b2.getInverseMass()));
+        //b2.pos = Vector2D.add(b2.pos, correction);
+
+        System.out.println("penetration: "+ penetration);
+        System.out.println("normal: "+normal.x+" ; "+normal.y);
     }
 }
